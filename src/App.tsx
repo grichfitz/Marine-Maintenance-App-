@@ -1,58 +1,48 @@
-import { useState, useEffect } from 'react';
+// src/App.tsx
+import React, { useState, useEffect } from 'react';
 import { supabase } from './lib/supabase';
 import Login from './pages/Login';
-
-interface Profile {
-  id: string;
-  full_name: string;
-  role: 'admin' | 'manager' | 'engineer' | null;
-}
+import './App.css'; // optional styling
 
 export default function App() {
   const [session, setSession] = useState<any>(null);
-  const [profile, setProfile] = useState<Profile | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [profile, setProfile] = useState<any>(null);
+  const [loadingProfile, setLoadingProfile] = useState<boolean>(false);
 
-  // Track auth state
+  // Listen for auth changes
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => setSession(data.session));
 
     const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
+      if (!session) setProfile(null);
     });
 
     return () => listener.subscription.unsubscribe();
   }, []);
 
-  // Load profile
+  // Load profile info
   useEffect(() => {
-    if (!session?.user) {
-      setProfile(null);
-      setLoading(false);
-      return;
-    }
-
     const loadProfile = async () => {
-      setLoading(true);
-      const { data, error } = await supabase
-        .from<Profile>('profiles')
-        .select('*')
-        .eq('id', session.user.id)
-        .single();
-
-      if (error) {
-        console.error('Error fetching profile:', error);
-        setProfile(null);
-      } else {
+      if (!session?.user?.id) return;
+      setLoadingProfile(true);
+      try {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', session.user.id)
+          .single();
+        if (error) throw error;
         setProfile(data);
+      } catch (err: any) {
+        console.error('Error fetching profile:', err.message);
+      } finally {
+        setLoadingProfile(false);
       }
-      setLoading(false);
     };
-
     loadProfile();
   }, [session]);
 
-  // Logout
   const handleLogout = async () => {
     await supabase.auth.signOut();
     setSession(null);
@@ -60,26 +50,34 @@ export default function App() {
   };
 
   if (!session) return <Login />;
-  if (loading) return <div>Loading profile…</div>;
 
   return (
-    <div style={{ padding: '2rem', fontFamily: 'sans-serif' }}>
-      <h1>Welcome, {profile?.full_name || 'User'}!</h1>
-      <p>Role: {profile?.role || 'None'}</p>
-      <button
-        onClick={handleLogout}
-        style={{
-          marginTop: '1rem',
-          padding: '0.5rem 1rem',
-          backgroundColor: '#0070f3',
-          color: '#fff',
-          border: 'none',
-          borderRadius: '5px',
-          cursor: 'pointer',
-        }}
-      >
+    <div className="app-container">
+      <header className="app-header">
+      <h1>Marine Maintenance Dashboard</h1>
+      <button onClick={handleLogout} className="logout-text">
         Logout
       </button>
+      </header>
+
+
+      <main className="app-main">
+        {loadingProfile ? (
+          <p>Loading profile...</p>
+        ) : (
+          profile && (
+            <div className="profile-card">
+              <h2>Welcome, {profile.full_name}!</h2>
+              <p><strong>Email:</strong> {session.user.email}</p>
+              <p><strong>Role:</strong> {profile.role}</p>
+            </div>
+          )
+        )}
+      </main>
+
+      <footer className="app-footer">
+        <p>© 2026 Worthy Marine. All rights reserved.</p>
+      </footer>
     </div>
   );
 }

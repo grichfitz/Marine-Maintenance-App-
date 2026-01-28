@@ -1,5 +1,7 @@
-import { useState } from 'react';
+// src/pages/Login.tsx
+import React, { useState } from 'react';
 import { supabase } from '../lib/supabase';
+import './Login.css'; // separate CSS for Login page
 
 export default function Login() {
   const [email, setEmail] = useState('');
@@ -17,61 +19,42 @@ export default function Login() {
         email,
         password,
       });
-
       if (error) throw error;
-
-      console.log('Logged in user:', data.user);
-    } catch (err: unknown) {
-      if (err instanceof Error) {
-        setError(err.message);
-      } else {
-        setError(String(err));
-      }
+      console.log('Logged in:', data);
+    } catch (err: any) {
+      setError(err.message);
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div style={{ padding: '2rem', fontFamily: 'sans-serif' }}>
-      <h2>Login</h2>
-      <form
-        onSubmit={handleLogin}
-        style={{ display: 'flex', flexDirection: 'column', gap: '1rem', maxWidth: '300px' }}
-      >
-        <input
-          type="email"
-          placeholder="Email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          required
-          style={{ padding: '0.5rem' }}
-        />
-        <input
-          type="password"
-          placeholder="Password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          required
-          style={{ padding: '0.5rem' }}
-        />
-        <button
-          type="submit"
-          disabled={loading}
-          style={{
-            padding: '0.5rem',
-            backgroundColor: '#0070f3',
-            color: '#fff',
-            border: 'none',
-            borderRadius: '5px',
-            cursor: 'pointer',
-          }}
-        >
-          {loading ? 'Logging in...' : 'Login'}
-        </button>
-        {error && <p style={{ color: 'red' }}>{error}</p>}
-      </form>
+    <div className="login-container">
+      <div className="login-card">
+        <h2>Marine Maintenance Login</h2>
+        {error && <p className="error-msg">{error}</p>}
+        <form onSubmit={handleLogin}>
+          <label>Email</label>
+          <input
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+          />
+
+          <label>Password</label>
+          <input
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+          />
+
+          <button type="submit" disabled={loading}>
+            {loading ? 'Logging in...' : 'Login'}
+          </button>
+        </form>
+      </div>
     </div>
   );
 }
-
