@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from './lib/supabase';
 import Login from './pages/Login';
+import Footer from './components/Footer';
 import './App.css'; // optional styling
 
 export default function App() {
@@ -54,10 +55,7 @@ export default function App() {
   return (
     <div className="app-container">
       <header className="app-header">
-      <h1>Marine Maintenance Dashboard</h1>
-      <button onClick={handleLogout} className="logout-text">
-        Logout
-      </button>
+        <h1>Marine Maintenance</h1>
       </header>
 
 
@@ -75,9 +73,7 @@ export default function App() {
         )}
       </main>
 
-      <footer className="app-footer">
-        <p>© 2026 Worthy Marine. All rights reserved.</p>
-      </footer>
+      <Footer onLogout={handleLogout} />
     </div>
   );
 }
