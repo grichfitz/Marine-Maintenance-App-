@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { useYachts } from '../../hooks/useYachts';
-import { useYachtTasks } from '../../hooks/useYachtTasks';
+import { useYachts } from '../hooks/useYachts';
+import { useYachtTasks } from '../hooks/useYachtTasks';
 
 interface Yacht {
   id: string;

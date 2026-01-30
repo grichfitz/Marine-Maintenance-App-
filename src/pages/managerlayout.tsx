@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import UsersPage from './manager/UsersPage';
-import YachtsPage from './manager/YachtsPage';
-import EngineeringPage from './manager/EngineeringPage';
+import UsersPage from './UsersPage';
+import YachtsPage from './YachtsPage';
+import EngineeringPage from './EngineeringPage';
 
 type ManagerPage = 'users' | 'yachts' | 'engineering';
 
