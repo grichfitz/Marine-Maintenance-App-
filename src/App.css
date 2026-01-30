@@ -87,3 +87,26 @@
 .yacht-card:hover {
   background: #f5f8fa;
 }
+
+.tasks-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.tasks-table th,
+.tasks-table td {
+  padding: 8px 12px;
+  vertical-align: top;
+}
+
+/* Description column */
+.tasks-table th:first-child,
+.tasks-table td:first-child {
+  text-align: left;
+}
+
+/* Other columns */
+.tasks-table th:not(:first-child),
+.tasks-table td:not(:first-child) {
+  text-align: center;
+}

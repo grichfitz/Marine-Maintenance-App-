@@ -32,7 +32,7 @@ export default function EngineerDashboard() {
   const [error, setError] = useState<string | null>(null);
 
   /**
-   * Load yachts (RLS controls visibility)
+   * Load yachts assigned to the engineer
    */
   useEffect(() => {
     const loadYachts = async () => {
@@ -69,27 +69,28 @@ export default function EngineerDashboard() {
 
       try {
         const { data, error } = await supabase
-          .from('yacht_tasks')
-          .select(`
+        .from('yacht_tasks')
+        .select(`
             task:task_id (
-              id,
-              description,
-              priority,
-              measurement:measurement_id (
+            id,
+            description,
+            priority,
+            measurement:measurement_id (
                 id,
                 name,
                 unit,
                 type
-              )
             )
-          `)
-          .eq('yacht_id', selectedYacht.id);
+            )
+        `)
+        .eq('yacht_id', selectedYacht.id);
 
         if (error) throw error;
 
         const mappedTasks: Task[] = (data || [])
-          .map((row: any) => row.task)
-          .filter(Boolean);
+        .map((row: any) => row.task)
+        .filter(Boolean)
+        .sort((a, b) => a.priority - b.priority); // 🔑 1 = highest
 
         setTasks(mappedTasks);
       } catch (err) {
@@ -106,14 +107,14 @@ export default function EngineerDashboard() {
 
   return (
     <div className="engineer-dashboard">
-      <h2>Yachts</h2>
+      <h2>My Yachts</h2>
 
       {error && <p style={{ color: 'red' }}>{error}</p>}
 
       {loadingYachts ? (
         <p>Loading yachts...</p>
       ) : yachts.length === 0 ? (
-        <p>No yachts available.</p>
+        <p>No yachts assigned.</p>
       ) : (
         <ul className="yacht-list">
           {yachts.map((yacht) => (

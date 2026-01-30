@@ -69,27 +69,28 @@ export default function ManagerDashboard() {
 
       try {
         const { data, error } = await supabase
-          .from('yacht_tasks')
-          .select(`
+        .from('yacht_tasks')
+        .select(`
             task:task_id (
-              id,
-              description,
-              priority,
-              measurement:measurement_id (
+            id,
+            description,
+            priority,
+            measurement:measurement_id (
                 id,
                 name,
                 unit,
                 type
-              )
             )
-          `)
-          .eq('yacht_id', selectedYacht.id);
+            )
+        `)
+        .eq('yacht_id', selectedYacht.id);
 
         if (error) throw error;
 
         const mappedTasks: Task[] = (data || [])
-          .map((row: any) => row.task)
-          .filter(Boolean);
+        .map((row: any) => row.task)
+        .filter(Boolean)
+        .sort((a, b) => a.priority - b.priority); // 🔑 1 = highest
 
         setTasks(mappedTasks);
       } catch (err) {
@@ -106,7 +107,7 @@ export default function ManagerDashboard() {
 
   return (
     <div className="manager-dashboard">
-      <h2>All Yachts</h2>
+      <h2>All Yachts - Management</h2>
 
       {error && <p style={{ color: 'red' }}>{error}</p>}
 
@@ -142,18 +143,16 @@ export default function ManagerDashboard() {
               <thead>
                 <tr>
                   <th>Description</th>
-                  <th>Measurement</th>
                   <th>Unit</th>
-                  <th>Priority</th>
+                  <th>Measurement</th>
                 </tr>
               </thead>
               <tbody>
                 {tasks.map((task) => (
                   <tr key={task.id}>
                     <td>{task.description}</td>
-                    <td>{task.measurement?.name ?? '-'}</td>
                     <td>{task.measurement?.unit ?? '-'}</td>
-                    <td>{task.priority}</td>
+                    <td>{task.measurement?.name ?? '-'}</td>
                   </tr>
                 ))}
               </tbody>
