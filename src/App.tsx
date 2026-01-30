@@ -5,7 +5,7 @@ import { supabase } from './lib/supabase';
 
 import Login from './pages/Login';
 import EngineerDashboard from './pages/EngineerDashboard';
-import ManagerLayout from './pages/ManagerLayout';
+import ManagerLayout from './pages/managerlayout';
 import EngineeringYachtPage from './pages/EngineeringYachtPage';
 import Footer from './components/Footer';
 
