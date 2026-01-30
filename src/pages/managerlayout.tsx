@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import UsersPage from './UsersPage';
-import YachtsPage from './YachtsPage';
-import EngineeringPage from './EngineeringPage';
+import UsersPage from './managersUsersPage';
+import YachtsPage from './managersYachtsPage';
+import EngineerDashboard from './EngineerDashboard'; // ✅ correct component
 
 type ManagerPage = 'users' | 'yachts' | 'engineering';
 
@@ -39,7 +39,7 @@ export default function ManagerLayout() {
       <div className="manager-content">
         {page === 'users' && <UsersPage />}
         {page === 'yachts' && <YachtsPage />}
-        {page === 'engineering' && <EngineeringPage />}
+        {page === 'engineering' && <EngineerDashboard />}
       </div>
     </div>
   );

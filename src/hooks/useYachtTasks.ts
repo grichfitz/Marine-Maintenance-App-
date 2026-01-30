@@ -1,3 +1,4 @@
+// src/hooks/useYachtTasks.ts
 import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 
@@ -23,6 +24,8 @@ export function useYachtTasks(yachtId: string | null) {
   useEffect(() => {
     if (!yachtId) {
       setTasks([]);
+      setError(null);
+      setLoading(false);
       return;
     }
 
@@ -30,47 +33,72 @@ export function useYachtTasks(yachtId: string | null) {
       setLoading(true);
       setError(null);
 
-      try {
-        const { data, error } = await supabase
-          .from('yacht_tasks')
-          .select(`
-            task:task_id (
-              id,
-              description,
-              priority,
-              measurement:measurement_id (
-                id,
-                name,
-                unit,
-                type
-              )
-            )
-          `)
-          .eq('yacht_id', yachtId);
+      /* -----------------------------------
+         1️⃣ Load yacht_tasks
+      ----------------------------------- */
+      const { data: yachtTasks, error: ytError } = await supabase
+        .from('yacht_tasks')
+        .select('task_id')
+        .eq('yacht_id', yachtId);
 
-        if (error) throw error;
-
-        const mappedTasks: Task[] = (data || [])
-          .map((row: any) => row.task)
-          .filter(Boolean)
-          .sort((a, b) => a.priority - b.priority); // 1 = highest
-
-        setTasks(mappedTasks);
-      } catch (err) {
-        console.error('Load tasks error:', err);
-        setError('Failed to load tasks.');
-        setTasks([]);
-      } finally {
+      if (ytError) {
+        console.error('Load yacht_tasks error:', ytError.message);
+        setError(ytError.message);
         setLoading(false);
+        return;
       }
+
+      const taskIds = yachtTasks.map((yt) => yt.task_id);
+
+      if (taskIds.length === 0) {
+        setTasks([]);
+        setLoading(false);
+        return;
+      }
+
+      /* -----------------------------------
+         2️⃣ Load tasks + measurements
+      ----------------------------------- */
+      const { data: tasksData, error: taskError } = await supabase
+        .from('tasks')
+        .select(`
+          id,
+          description,
+          priority,
+          measurement:measurement_id (
+            id,
+            name,
+            unit,
+            type
+          )
+        `)
+        .in('id', taskIds);
+
+      if (taskError) {
+        console.error('Load tasks error:', taskError.message);
+        setError(taskError.message);
+        setLoading(false);
+        return;
+      }
+
+      /* -----------------------------------
+         3️⃣ Sort & set
+      ----------------------------------- */
+      const sorted = tasksData
+        .sort((a, b) => a.priority - b.priority)
+        .map((t) => ({
+          id: t.id,
+          description: t.description,
+          priority: t.priority,
+          measurement: t.measurement ?? null,
+        }));
+
+      setTasks(sorted);
+      setLoading(false);
     };
 
     loadTasks();
   }, [yachtId]);
 
-  return {
-    tasks,
-    loading,
-    error,
-  };
+  return { tasks, loading, error };
 }
