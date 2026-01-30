@@ -3,7 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { supabase } from './lib/supabase';
 import Login from './pages/Login';
 import ManagerDashboard from './pages/ManagerDashboard';
-import ManagerLayout from 'src/pages/manager/ManagerLayout.tsx';
+import ManagerLayout from './pages/manager/ManagerLayout';
 import EngineerDashboard from './pages/EngineerDashboard';
 import Footer from './components/Footer';
 import './App.css';
