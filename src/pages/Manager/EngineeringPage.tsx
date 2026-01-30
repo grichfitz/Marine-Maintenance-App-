@@ -1,7 +1,6 @@
-// src/pages/ManagerDashboard.tsx
 import React, { useState } from 'react';
-import { useYachts } from '../hooks/useYachts';
-import { useYachtTasks } from '../hooks/useYachtTasks';
+import { useYachts } from '../../hooks/useYachts';
+import { useYachtTasks } from '../../hooks/useYachtTasks';
 
 interface Yacht {
   id: string;
@@ -10,7 +9,7 @@ interface Yacht {
   location: string;
 }
 
-export default function ManagerDashboard() {
+export default function EngineeringPage() {
   const [selectedYacht, setSelectedYacht] = useState<Yacht | null>(null);
 
   const {
@@ -26,8 +25,8 @@ export default function ManagerDashboard() {
   } = useYachtTasks(selectedYacht?.id ?? null);
 
   return (
-    <div className="manager-dashboard">
-      <h2>Yachts - Manager View</h2>
+    <div>
+      <h2>Engineering</h2>
 
       {(yachtsError || tasksError) && (
         <p style={{ color: 'red' }}>{yachtsError || tasksError}</p>
@@ -35,8 +34,6 @@ export default function ManagerDashboard() {
 
       {loadingYachts ? (
         <p>Loading yachts...</p>
-      ) : yachts.length === 0 ? (
-        <p>No yachts found.</p>
       ) : (
         <ul className="yacht-list">
           {yachts.map((yacht) => (
@@ -53,13 +50,11 @@ export default function ManagerDashboard() {
       )}
 
       {selectedYacht && (
-        <div className="yacht-tasks">
+        <>
           <h3>Tasks for {selectedYacht.name}</h3>
 
           {loadingTasks ? (
             <p>Loading tasks...</p>
-          ) : tasks.length === 0 ? (
-            <p>No tasks assigned to this yacht.</p>
           ) : (
             <table className="tasks-table">
               <thead>
@@ -80,7 +75,7 @@ export default function ManagerDashboard() {
               </tbody>
             </table>
           )}
-        </div>
+        </>
       )}
     </div>
   );

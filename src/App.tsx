@@ -3,6 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { supabase } from './lib/supabase';
 import Login from './pages/Login';
 import ManagerDashboard from './pages/ManagerDashboard';
+import ManagerLayout from './pages/manager/ManagerLayout';
 import EngineerDashboard from './pages/EngineerDashboard';
 import Footer from './components/Footer';
 import './App.css';
@@ -128,7 +129,7 @@ export default function App() {
           <>
             {profile.role === 'engineer' && <EngineerDashboard />}
 
-            {profile.role === 'manager' && <ManagerDashboard />}
+            {profile.role === 'manager' && <ManagerLayout />}
 
             {(profile.role === 'owner') && (
               <div className="profile-card">

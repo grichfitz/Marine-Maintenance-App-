@@ -1,6 +1,7 @@
 // src/pages/EngineerDashboard.tsx
-import React, { useState, useEffect } from 'react';
-import { supabase } from '../lib/supabase';
+import React, { useState } from 'react';
+import { useYachts } from '../hooks/useYachts';
+import { useYachtTasks } from '../hooks/useYachtTasks';
 
 interface Yacht {
   id: string;
@@ -9,107 +10,28 @@ interface Yacht {
   location: string;
 }
 
-interface Measurement {
-  id: string;
-  name: string;
-  unit: string;
-  type: string;
-}
-
-interface Task {
-  id: string;
-  description: string;
-  priority: number;
-  measurement: Measurement | null;
-}
-
 export default function EngineerDashboard() {
-  const [yachts, setYachts] = useState<Yacht[]>([]);
   const [selectedYacht, setSelectedYacht] = useState<Yacht | null>(null);
-  const [tasks, setTasks] = useState<Task[]>([]);
-  const [loadingYachts, setLoadingYachts] = useState(false);
-  const [loadingTasks, setLoadingTasks] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
-  /**
-   * Load yachts assigned to the engineer
-   */
-  useEffect(() => {
-    const loadYachts = async () => {
-      setLoadingYachts(true);
-      setError(null);
+  const {
+    yachts,
+    loading: loadingYachts,
+    error: yachtsError,
+  } = useYachts();
 
-      try {
-        const { data, error } = await supabase
-          .from('yachts')
-          .select('*');
-
-        if (error) throw error;
-        setYachts(data || []);
-      } catch (err) {
-        console.error('Load yachts error:', err);
-        setError('Failed to load yachts.');
-      } finally {
-        setLoadingYachts(false);
-      }
-    };
-
-    loadYachts();
-  }, []);
-
-  /**
-   * Load tasks + measurements when a yacht is selected
-   */
-  useEffect(() => {
-    if (!selectedYacht) return;
-
-    const loadTasks = async () => {
-      setLoadingTasks(true);
-      setError(null);
-
-      try {
-        const { data, error } = await supabase
-        .from('yacht_tasks')
-        .select(`
-            task:task_id (
-            id,
-            description,
-            priority,
-            measurement:measurement_id (
-                id,
-                name,
-                unit,
-                type
-            )
-            )
-        `)
-        .eq('yacht_id', selectedYacht.id);
-
-        if (error) throw error;
-
-        const mappedTasks: Task[] = (data || [])
-        .map((row: any) => row.task)
-        .filter(Boolean)
-        .sort((a, b) => a.priority - b.priority); // 🔑 1 = highest
-
-        setTasks(mappedTasks);
-      } catch (err) {
-        console.error('Load tasks error:', err);
-        setError('Failed to load tasks.');
-        setTasks([]);
-      } finally {
-        setLoadingTasks(false);
-      }
-    };
-
-    loadTasks();
-  }, [selectedYacht]);
+  const {
+    tasks,
+    loading: loadingTasks,
+    error: tasksError,
+  } = useYachtTasks(selectedYacht?.id ?? null);
 
   return (
     <div className="engineer-dashboard">
-      <h2>My Yachts</h2>
+      <h2>Yachts - Engineer View</h2>
 
-      {error && <p style={{ color: 'red' }}>{error}</p>}
+      {(yachtsError || tasksError) && (
+        <p style={{ color: 'red' }}>{yachtsError || tasksError}</p>
+      )}
 
       {loadingYachts ? (
         <p>Loading yachts...</p>
@@ -145,7 +67,6 @@ export default function EngineerDashboard() {
                   <th>Description</th>
                   <th>Measurement</th>
                   <th>Unit</th>
-                  <th>Priority</th>
                 </tr>
               </thead>
               <tbody>
@@ -154,7 +75,6 @@ export default function EngineerDashboard() {
                     <td>{task.description}</td>
                     <td>{task.measurement?.name ?? '-'}</td>
                     <td>{task.measurement?.unit ?? '-'}</td>
-                    <td>{task.priority}</td>
                   </tr>
                 ))}
               </tbody>
