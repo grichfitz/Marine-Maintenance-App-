@@ -1,9 +1,9 @@
 // src/pages/EngineeringYachtPage.tsx
-import React, { useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
-import { supabase } from '../lib/supabase';
-import { useYachts } from '../hooks/useYachts';
-import { useYachtTasks } from '../hooks/useYachtTasks';
+import { useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
+import { supabase } from "../lib/supabase";
+import { useYachts } from "../hooks/useYachts";
+import { useYachtTasks } from "../hooks/useYachtTasks";
 
 interface ResultState {
   [taskId: string]: {
@@ -14,11 +14,11 @@ interface ResultState {
 }
 
 const iconButtonStyle: React.CSSProperties = {
-  background: 'none',
-  border: 'none',
+  background: "none",
+  border: "none",
   padding: 0,
-  cursor: 'pointer',
-  fontSize: '1.2rem',
+  cursor: "pointer",
+  fontSize: "1.2rem",
   lineHeight: 1,
 };
 
@@ -35,7 +35,7 @@ export default function EngineeringYachtPage() {
   const [savingTask, setSavingTask] = useState<string | null>(null);
 
   /**
-   * Explicit save into task_results (INSERT)
+   * Explicit save into task_results
    */
   const saveTask = async (
     taskId: string,
@@ -59,7 +59,7 @@ export default function EngineeringYachtPage() {
     }
 
     const { error } = await supabase
-      .from('task_results')
+      .from("task_results")
       .insert(insertPayload);
 
     if (!error) {
@@ -68,53 +68,50 @@ export default function EngineeringYachtPage() {
         [taskId]: { ...prev[taskId], saved: true },
       }));
     } else {
-      console.error('Save failed', error);
+      console.error("Save failed", error);
     }
 
     setSavingTask(null);
   };
 
-<<<<<<< HEAD
-=======
   /**
-   * Render measurement input (no save here)
+   * Render measurement input
    */
->>>>>>> 6597f865e94fa9e49a28625e93dc940eaa66bee4
   const renderInput = (task: any) => {
     if (!task.measurement) return null;
 
     switch (task.measurement.type) {
-      case 'numeric':
+      case "numeric":
         return (
           <>
             <input
               type="number"
-              value={results[task.id]?.value ?? ''}
+              value={results[task.id]?.value ?? ""}
               onChange={(e) =>
                 setResults((prev) => ({
                   ...prev,
                   [task.id]: {
                     value:
-                      e.target.value === ''
+                      e.target.value === ""
                         ? undefined
                         : Number(e.target.value),
                     saved: false,
                   },
                 }))
               }
-              style={{ width: '100px' }}
+              style={{ width: "100px" }}
             />
-            <span style={{ marginLeft: '0.5rem' }}>
+            <span style={{ marginLeft: "0.5rem" }}>
               {task.measurement.unit}
             </span>
           </>
         );
 
-      case 'enum':
+      case "enum":
         return (
           <>
             <select
-              value={results[task.id]?.level ?? ''}
+              value={results[task.id]?.level ?? ""}
               onChange={(e) =>
                 setResults((prev) => ({
                   ...prev,
@@ -131,7 +128,7 @@ export default function EngineeringYachtPage() {
               <option value="Low">Low</option>
               <option value="Empty">Empty</option>
             </select>
-            <span style={{ marginLeft: '0.5rem' }}>
+            <span style={{ marginLeft: "0.5rem" }}>
               {task.measurement.unit}
             </span>
           </>
@@ -142,44 +139,29 @@ export default function EngineeringYachtPage() {
     }
   };
 
-<<<<<<< HEAD
-  const renderAction = (task: any) => {
-    const saved = results[task.id]?.saved;
-
-=======
   /**
    * Render save / status icon
    */
   const renderAction = (task: any) => {
     const saved = results[task.id]?.saved;
 
-    // INSPECTION-ONLY TASK
->>>>>>> 6597f865e94fa9e49a28625e93dc940eaa66bee4
+    // Inspection-only task
     if (!task.measurement) {
       return saved ? (
-        <span style={{ color: 'green' }}>✔</span>
+        <span style={{ color: "green" }}>✔</span>
       ) : (
         <button
           style={iconButtonStyle}
-<<<<<<< HEAD
-          onClick={() => saveTask(task.id, { level: 'OK' })}
-=======
-          onClick={() =>
-            saveTask(task.id, { level: 'OK' })
-          }
->>>>>>> 6597f865e94fa9e49a28625e93dc940eaa66bee4
+          onClick={() => saveTask(task.id, { level: "OK" })}
         >
           ❌
         </button>
       );
     }
 
-<<<<<<< HEAD
-=======
-    // MEASURED TASKS
->>>>>>> 6597f865e94fa9e49a28625e93dc940eaa66bee4
+    // Measured tasks
     return saved ? (
-      <span style={{ color: 'green' }}>✔</span>
+      <span style={{ color: "green" }}>✔</span>
     ) : (
       <button
         style={iconButtonStyle}
@@ -197,11 +179,10 @@ export default function EngineeringYachtPage() {
   };
 
   return (
-<<<<<<< HEAD
     <div>
       {/* Text-based back navigation */}
       <div
-        style={{ cursor: 'pointer', marginBottom: 12 }}
+        style={{ cursor: "pointer", marginBottom: 12 }}
         onClick={() => navigate(-1)}
       >
         ← Back
@@ -210,14 +191,6 @@ export default function EngineeringYachtPage() {
       {yacht && (
         <>
           <h2 style={{ marginTop: 0 }}>{yacht.name}</h2>
-=======
-    <div className="engineering-yacht-page">
-      <button onClick={() => navigate(-1)}>← Back</button>
-
-      {yacht && (
-        <>
-          <h2>{yacht.name}</h2>
->>>>>>> 6597f865e94fa9e49a28625e93dc940eaa66bee4
           <p>
             {yacht.make_model} – {yacht.location}
           </p>
@@ -229,7 +202,7 @@ export default function EngineeringYachtPage() {
       {loading ? (
         <p>Loading tasks…</p>
       ) : error ? (
-        <p style={{ color: 'red' }}>{error}</p>
+        <p style={{ color: "red" }}>{error}</p>
       ) : (
         <table className="tasks-table">
           <thead>
