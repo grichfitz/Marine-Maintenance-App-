@@ -1,0 +1,112 @@
+/* src/App.css */
+.app-container {
+  font-family: 'Arial', sans-serif;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background: #f0f4f8;
+  color: #333;
+}
+
+.app-header {
+  background: #005f73;
+  color: white;
+  padding: 1rem 2rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.logout-btn {
+  background: #e63946;
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+  border-radius: 5px;
+}
+
+/* Replace the old logout button styles with text style */
+.logout-text {
+  background: none;
+  border: none;
+  color: white;        /* same as header text */
+  cursor: pointer;
+  font-size: 1rem;
+  text-decoration: underline; /* optional for a link feel */
+  padding: 0;
+}
+
+.logout-text:hover {
+  opacity: 0.8; /* subtle hover effect */
+}
+
+
+.app-main {
+  flex: 1;
+  padding: 2rem;
+}
+
+.profile-card {
+  background: white;
+  padding: 2rem;
+  border-radius: 10px;
+  box-shadow: 0 0 10px rgba(0,0,0,0.1);
+}
+
+.profile-card h2 {
+  margin-top: 0;
+  color: #0077b6;
+}
+
+.app-footer {
+  background: #005f73;
+  color: white;
+  text-align: center;
+  padding: 1rem;
+}
+
+.dashboard-container {
+  padding: 1.5rem;
+}
+
+.yacht-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 1rem;
+}
+
+.yacht-card {
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 1rem;
+  cursor: pointer;
+  background: #fff;
+}
+
+.yacht-card:hover {
+  background: #f5f8fa;
+}
+
+.tasks-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.tasks-table th,
+.tasks-table td {
+  padding: 8px 12px;
+  vertical-align: top;
+}
+
+/* Description column */
+.tasks-table th:first-child,
+.tasks-table td:first-child {
+  text-align: left;
+}
+
+/* Other columns */
+.tasks-table th:not(:first-child),
+.tasks-table td:not(:first-child) {
+  text-align: center;
+}
