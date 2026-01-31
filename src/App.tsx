@@ -15,6 +15,8 @@ import UserDetailPage from './pages/UserDetailPage';
 import YachtsListPage from './pages/YachtsListPage';
 import YachtDetailPage from './pages/YachtDetailPage';
 
+import TaskDetailPage from "./pages/TaskDetailPage";
+
 import './App.css';
 
 interface Profile {
@@ -104,6 +106,11 @@ export default function App() {
             <Route
               path="/engineering/yachts/:yachtId"
               element={<EngineeringYachtPage />}
+            />
+
+            <Route
+              path="/engineering/tasks/:taskId"
+              element={<TaskDetailPage />}
             />
 
             {/* Manager routes */}

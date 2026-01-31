@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "../lib/supabase";
 
 import {
@@ -42,11 +43,17 @@ const DROP_HIT_HEIGHT = 18;
 ======================= */
 
 export default function TaskTree({ yachtId }: Props) {
+  const navigate = useNavigate();
+
   const [folders, setFolders] = useState<TaskFolder[]>([]);
   const [tasks, setTasks] = useState<Task[]>([]);
   const [assignedTaskIds, setAssignedTaskIds] = useState<string[]>([]);
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
   const [loading, setLoading] = useState(true);
+
+  // folder rename state
+  const [editingFolderId, setEditingFolderId] = useState<string | null>(null);
+  const [folderNameDraft, setFolderNameDraft] = useState("");
 
   /* =======================
      DND
@@ -57,7 +64,7 @@ export default function TaskTree({ yachtId }: Props) {
   );
 
   /* =======================
-     LOAD
+     LOAD DATA
   ======================= */
 
   useEffect(() => {
@@ -96,80 +103,48 @@ export default function TaskTree({ yachtId }: Props) {
     tasksByFolder.set(k, [...(tasksByFolder.get(k) || []), t]);
   });
 
-  function isDescendant(parentId: string, childId: string): boolean {
-    let current = folders.find((f) => f.id === childId);
-    while (current) {
-      if (current.parent_id === parentId) return true;
-      current = current.parent_id
-        ? folders.find((f) => f.id === current!.parent_id)
-        : undefined;
-    }
-    return false;
-  }
-
   /* =======================
-     DRAG END
+     TASK ASSIGNMENT
   ======================= */
 
-  const handleDragEnd = async (event: any) => {
-    const { active, over } = event;
-    if (!over || active.id === over.id) return;
+  const toggleTaskAssignment = async (taskId: string) => {
+    const isAssigned = assignedTaskIds.includes(taskId);
 
-    const draggedId = active.id as string;
-    const overId = over.id as string;
+    setAssignedTaskIds((prev) =>
+      isAssigned ? prev.filter((id) => id !== taskId) : [...prev, taskId]
+    );
 
-    const draggedTask = tasks.find((t) => t.id === draggedId);
-    const draggedFolder = folders.find((f) => f.id === draggedId);
-
-    /* ---------- TASK ---------- */
-    if (draggedTask) {
-      const targetFolderId = overId.startsWith("drop:")
-        ? overId.split(":")[1] === "unassigned"
-          ? null
-          : overId.split(":")[1]
-        : overId === "unassigned"
-        ? null
-        : overId;
-
+    if (isAssigned) {
       await supabase
-        .from("tasks")
-        .update({ folder_id: targetFolderId })
-        .eq("id", draggedId);
-
-      setTasks((p) =>
-        p.map((t) =>
-          t.id === draggedId ? { ...t, folder_id: targetFolderId } : t
-        )
-      );
-      return;
+        .from("yacht_tasks")
+        .delete()
+        .eq("yacht_id", yachtId)
+        .eq("task_id", taskId);
+    } else {
+      await supabase.from("yacht_tasks").insert({
+        yacht_id: yachtId,
+        task_id: taskId,
+      });
     }
+  };
 
-    /* ---------- FOLDER (✅ FIXED) ---------- */
-    if (draggedFolder) {
-      const targetParentId = overId.startsWith("drop:")
-        ? overId.split(":")[1] === "unassigned"
-          ? null
-          : overId.split(":")[1]
-        : overId === "unassigned"
-        ? null
-        : overId;
+  /* =======================
+     FOLDER RENAME
+  ======================= */
 
-      if (targetParentId) {
-        if (targetParentId === draggedId) return;
-        if (isDescendant(draggedId, targetParentId)) return;
-      }
+  const saveFolderName = async (folderId: string) => {
+    await supabase
+      .from("task_folders")
+      .update({ name: folderNameDraft })
+      .eq("id", folderId);
 
-      await supabase
-        .from("task_folders")
-        .update({ parent_id: targetParentId })
-        .eq("id", draggedId);
+    setFolders((prev) =>
+      prev.map((f) =>
+        f.id === folderId ? { ...f, name: folderNameDraft } : f
+      )
+    );
 
-      setFolders((p) =>
-        p.map((f) =>
-          f.id === draggedId ? { ...f, parent_id: targetParentId } : f
-        )
-      );
-    }
+    setEditingFolderId(null);
   };
 
   /* =======================
@@ -206,56 +181,9 @@ export default function TaskTree({ yachtId }: Props) {
           {content}
         </div>
 
-        <div
-          style={{
-            display: "flex",
-            gap: 12,
-            paddingRight: 8,
-            fontSize: 18,
-          }}
-        >
+        <div style={{ display: "flex", gap: 12, paddingRight: 8 }}>
           {actions}
         </div>
-      </div>
-    );
-  }
-
-  /* =======================
-     DROP LINE
-  ======================= */
-
-  function DropLine({
-    folderId,
-    index,
-    depth,
-  }: {
-    folderId: string;
-    index: number;
-    depth: number;
-  }) {
-    const { setNodeRef, isOver } = useDroppable({
-      id: `drop:${folderId}:${index}`,
-    });
-
-    return (
-      <div
-        ref={setNodeRef}
-        style={{
-          height: DROP_HIT_HEIGHT,
-          marginTop: -DROP_HIT_HEIGHT / 2,
-          marginBottom: -DROP_HIT_HEIGHT / 2,
-          marginLeft: depth * INDENT,
-          display: "flex",
-          alignItems: "center",
-        }}
-      >
-        <div
-          style={{
-            height: 2,
-            width: "100%",
-            backgroundColor: isOver ? "#2563eb" : "transparent",
-          }}
-        />
       </div>
     );
   }
@@ -273,18 +201,27 @@ export default function TaskTree({ yachtId }: Props) {
         <Row
           depth={depth}
           content={
-            <label>
+            <label style={{ display: "flex", gap: 8, alignItems: "center" }}>
               <input
                 type="checkbox"
                 checked={assignedTaskIds.includes(task.id)}
-                readOnly
-              />{" "}
+                onChange={() => toggleTaskAssignment(task.id)}
+                onClick={(e) => e.stopPropagation()}
+              />
               {task.description}
             </label>
           }
           actions={
             <>
-              <span style={{ opacity: 0.5 }}>✏️</span>
+              <span
+                style={{ cursor: "pointer", opacity: 0.6 }}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  navigate(`/engineering/tasks/${task.id}`);
+                }}
+              >
+                ✏️
+              </span>
               <span {...listeners} {...attributes} style={{ cursor: "grab" }}>
                 ☰
               </span>
@@ -310,15 +247,13 @@ export default function TaskTree({ yachtId }: Props) {
     const tasksHere =
       tasksByFolder.get(folder.id === "unassigned" ? null : folder.id) || [];
 
-    const { setNodeRef: dropRef } = useDroppable({ id: folder.id });
-
     const drag =
       folder.id !== "unassigned" && "position" in folder
         ? useDraggable({ id: folder.id })
         : ({} as any);
 
     return (
-      <div ref={dropRef}>
+      <div>
         <div
           ref={drag.setNodeRef}
           style={{ transform: CSS.Translate.toString(drag.transform) }}
@@ -326,24 +261,44 @@ export default function TaskTree({ yachtId }: Props) {
           <Row
             depth={depth}
             content={
-              <strong
-                style={{ cursor: "pointer" }}
-                onClick={() =>
-                  setCollapsed((p) => ({
-                    ...p,
-                    [folder.id]: !p[folder.id],
-                  }))
-                }
-              >
-                {isCollapsed ? "▶" : "▼"} 📁 {folder.name}
-              </strong>
+              editingFolderId === folder.id ? (
+                <input
+                  autoFocus
+                  value={folderNameDraft}
+                  onChange={(e) => setFolderNameDraft(e.target.value)}
+                  onBlur={() => saveFolderName(folder.id)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") saveFolderName(folder.id);
+                    if (e.key === "Escape") setEditingFolderId(null);
+                  }}
+                />
+              ) : (
+                <strong
+                  style={{ cursor: "pointer" }}
+                  onClick={() =>
+                    setCollapsed((p) => ({
+                      ...p,
+                      [folder.id]: !p[folder.id],
+                    }))
+                  }
+                >
+                  {isCollapsed ? "▶" : "▼"} 📁 {folder.name}
+                </strong>
+              )
             }
             actions={
-              folder.id === "unassigned" ? (
-                <></>
-              ) : (
+              folder.id === "unassigned" ? null : (
                 <>
-                  <span style={{ opacity: 0.5 }}>✏️</span>
+                  <span
+                    style={{ cursor: "pointer", opacity: 0.6 }}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setEditingFolderId(folder.id);
+                      setFolderNameDraft(folder.name);
+                    }}
+                  >
+                    ✏️
+                  </span>
                   <span
                     {...drag.listeners}
                     {...drag.attributes}
@@ -359,32 +314,13 @@ export default function TaskTree({ yachtId }: Props) {
 
         {!isCollapsed &&
           (foldersByParent.get(folder.id) || []).map((child) => (
-            <FolderNode
-              key={child.id}
-              folder={child}
-              depth={depth + 1}
-            />
+            <FolderNode key={child.id} folder={child} depth={depth + 1} />
           ))}
 
         {!isCollapsed &&
-          tasksHere.map((task, i) => (
-            <div key={task.id}>
-              <DropLine
-                folderId={folder.id}
-                index={i}
-                depth={depth + 1}
-              />
-              <DraggableTask task={task} depth={depth + 1} />
-            </div>
+          tasksHere.map((task) => (
+            <DraggableTask key={task.id} task={task} depth={depth + 1} />
           ))}
-
-        {!isCollapsed && (
-          <DropLine
-            folderId={folder.id}
-            index={tasksHere.length}
-            depth={depth + 1}
-          />
-        )}
       </div>
     );
   }
@@ -399,16 +335,12 @@ export default function TaskTree({ yachtId }: Props) {
     <DndContext
       sensors={sensors}
       collisionDetection={closestCenter}
-      onDragEnd={handleDragEnd}
     >
       {(foldersByParent.get(null) || []).map((folder) => (
         <FolderNode key={folder.id} folder={folder} depth={0} />
       ))}
 
-      <FolderNode
-        folder={{ id: "unassigned", name: "Unassigned" }}
-        depth={0}
-      />
+      <FolderNode folder={{ id: "unassigned", name: "Unassigned" }} depth={0} />
     </DndContext>
   );
 }
