@@ -74,6 +74,12 @@ export default function EngineeringYachtPage() {
     setSavingTask(null);
   };
 
+<<<<<<< HEAD
+=======
+  /**
+   * Render measurement input (no save here)
+   */
+>>>>>>> 6597f865e94fa9e49a28625e93dc940eaa66bee4
   const renderInput = (task: any) => {
     if (!task.measurement) return null;
 
@@ -136,22 +142,42 @@ export default function EngineeringYachtPage() {
     }
   };
 
+<<<<<<< HEAD
   const renderAction = (task: any) => {
     const saved = results[task.id]?.saved;
 
+=======
+  /**
+   * Render save / status icon
+   */
+  const renderAction = (task: any) => {
+    const saved = results[task.id]?.saved;
+
+    // INSPECTION-ONLY TASK
+>>>>>>> 6597f865e94fa9e49a28625e93dc940eaa66bee4
     if (!task.measurement) {
       return saved ? (
         <span style={{ color: 'green' }}>✔</span>
       ) : (
         <button
           style={iconButtonStyle}
+<<<<<<< HEAD
           onClick={() => saveTask(task.id, { level: 'OK' })}
+=======
+          onClick={() =>
+            saveTask(task.id, { level: 'OK' })
+          }
+>>>>>>> 6597f865e94fa9e49a28625e93dc940eaa66bee4
         >
           ❌
         </button>
       );
     }
 
+<<<<<<< HEAD
+=======
+    // MEASURED TASKS
+>>>>>>> 6597f865e94fa9e49a28625e93dc940eaa66bee4
     return saved ? (
       <span style={{ color: 'green' }}>✔</span>
     ) : (
@@ -171,6 +197,7 @@ export default function EngineeringYachtPage() {
   };
 
   return (
+<<<<<<< HEAD
     <div>
       {/* Text-based back navigation */}
       <div
@@ -183,6 +210,14 @@ export default function EngineeringYachtPage() {
       {yacht && (
         <>
           <h2 style={{ marginTop: 0 }}>{yacht.name}</h2>
+=======
+    <div className="engineering-yacht-page">
+      <button onClick={() => navigate(-1)}>← Back</button>
+
+      {yacht && (
+        <>
+          <h2>{yacht.name}</h2>
+>>>>>>> 6597f865e94fa9e49a28625e93dc940eaa66bee4
           <p>
             {yacht.make_model} – {yacht.location}
           </p>

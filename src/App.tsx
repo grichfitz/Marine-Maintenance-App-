@@ -9,6 +9,7 @@ import ManagerLayout from './pages/managerDashboard';
 import EngineeringYachtPage from './pages/EngineeringYachtPage';
 import Footer from './components/Footer';
 
+<<<<<<< HEAD
 // ✅ NEW imports
 import UsersListPage from './pages/UsersListPage';
 import UserDetailPage from './pages/UserDetailPage';
@@ -16,6 +17,8 @@ import YachtsListPage from './pages/YachtsListPage';
 import YachtDetailPage from './pages/YachtDetailPage';
 
 
+=======
+>>>>>>> 6597f865e94fa9e49a28625e93dc940eaa66bee4
 import './App.css';
 
 interface Profile {
@@ -82,7 +85,10 @@ export default function App() {
 
         <main className="app-main">
           <Routes>
+<<<<<<< HEAD
             {/* Landing route (unchanged behaviour) */}
+=======
+>>>>>>> 6597f865e94fa9e49a28625e93dc940eaa66bee4
             <Route
               path="/"
               element={
@@ -98,11 +104,15 @@ export default function App() {
               }
             />
 
+<<<<<<< HEAD
             {/* Engineering (unchanged) */}
+=======
+>>>>>>> 6597f865e94fa9e49a28625e93dc940eaa66bee4
             <Route
               path="/engineering/yachts/:yachtId"
               element={<EngineeringYachtPage />}
             />
+<<<<<<< HEAD
 
             {/* ✅ Manager → Users (NEW, engineering-style) */}
             {profile.role === 'manager' && (
@@ -116,6 +126,8 @@ export default function App() {
                 <Route path="/manager/yachts/:id" element={<YachtDetailPage />} />
               </>
             )}
+=======
+>>>>>>> 6597f865e94fa9e49a28625e93dc940eaa66bee4
           </Routes>
         </main>
 
