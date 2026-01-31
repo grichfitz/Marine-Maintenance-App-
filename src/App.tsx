@@ -76,8 +76,11 @@ export default function App() {
     <BrowserRouter>
       <div className="app-container">
         <header className="app-header">
-          <h1>Marine Maintenance</h1>
+          <div className="app-header-inner">
+            <span className="app-title">Marine Maintenance</span>
+          </div>
         </header>
+
 
         <main className="app-main">
           <Routes>

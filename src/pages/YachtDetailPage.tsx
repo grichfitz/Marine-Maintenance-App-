@@ -2,6 +2,12 @@ import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "../lib/supabase";
 
+import TaskTree from "../components/TaskTree";
+
+/* =======================
+   TYPES
+======================= */
+
 type Yacht = {
   id: string;
   name: string;
@@ -14,135 +20,83 @@ type Engineer = {
   full_name: string;
 };
 
-type Task = {
-  id: string;
-  description: string;
-};
+/* =======================
+   PAGE
+======================= */
 
 export default function YachtDetailPage() {
-  const { id } = useParams<{ id: string }>();
+  const { id: yachtId } = useParams<{ id: string }>();
   const navigate = useNavigate();
 
   const [yacht, setYacht] = useState<Yacht | null>(null);
   const [engineers, setEngineers] = useState<Engineer[]>([]);
   const [assignedEngineerIds, setAssignedEngineerIds] = useState<string[]>([]);
-  const [tasks, setTasks] = useState<Task[]>([]);
-  const [assignedTaskIds, setAssignedTaskIds] = useState<string[]>([]);
-  const [loadingAssignments, setLoadingAssignments] = useState(true);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  /**
-   * Load yacht details
-   */
+  /* =======================
+     LOAD YACHT
+  ======================= */
+
   useEffect(() => {
-    if (!id) return;
+    if (!yachtId) return;
 
-    const loadYacht = async () => {
-      const { data, error } = await supabase
-        .from("yachts")
-        .select("id, name, make_model, location")
-        .eq("id", id)
-        .single();
+    supabase
+      .from("yachts")
+      .select("id, name, make_model, location")
+      .eq("id", yachtId)
+      .single()
+      .then(({ data, error }) => {
+        if (error || !data) {
+          setError("Failed to load yacht");
+          return;
+        }
+        setYacht(data);
+        setLoading(false);
+      });
+  }, [yachtId]);
 
-      if (error || !data) {
-        setError("Failed to load yacht.");
-        return;
-      }
+  /* =======================
+     LOAD ENGINEERS
+  ======================= */
 
-      setYacht(data);
-    };
-
-    loadYacht();
-  }, [id]);
-
-  /**
-   * Load all engineers
-   */
   useEffect(() => {
-    const loadEngineers = async () => {
-      const { data } = await supabase
-        .from("profiles")
-        .select("id, full_name")
-        .eq("role", "engineer")
-        .order("full_name");
-
-      setEngineers(Array.isArray(data) ? data : []);
-    };
-
-    loadEngineers();
+    supabase
+      .from("profiles")
+      .select("id, full_name")
+      .eq("role", "engineer")
+      .order("full_name")
+      .then(({ data }) => {
+        setEngineers(Array.isArray(data) ? data : []);
+      });
   }, []);
 
-  /**
-   * Load assigned engineers
-   */
+  /* =======================
+     LOAD ENGINEER ASSIGNMENTS
+  ======================= */
+
   useEffect(() => {
-    if (!id) return;
+    if (!yachtId) return;
 
-    const loadEngineerAssignments = async () => {
-      const { data } = await supabase
-        .from("engineer_yachts")
-        .select("engineer_profile_id")
-        .eq("yacht_id", id);
+    supabase
+      .from("engineer_yachts")
+      .select("engineer_profile_id")
+      .eq("yacht_id", yachtId)
+      .then(({ data }) => {
+        setAssignedEngineerIds(
+          Array.isArray(data)
+            ? data.map((r) => r.engineer_profile_id)
+            : []
+        );
+      });
+  }, [yachtId]);
 
-      setAssignedEngineerIds(
-        Array.isArray(data)
-          ? data.map((r) => r.engineer_profile_id)
-          : []
-      );
+  /* =======================
+     TOGGLE ENGINEER
+  ======================= */
 
-      setLoadingAssignments(false);
-    };
-
-    loadEngineerAssignments();
-  }, [id]);
-
-  /**
-   * Load ALL tasks
-   */
-  useEffect(() => {
-    const loadTasks = async () => {
-      const { data, error } = await supabase
-        .from("tasks")
-        .select("id, description")
-        .order("description");
-
-      if (error) {
-        console.error("Failed to load tasks", error);
-        setTasks([]);
-        return;
-      }
-
-      setTasks(Array.isArray(data) ? data : []);
-    };
-
-    loadTasks();
-  }, []);
-
-  /**
-   * Load assigned tasks for this yacht
-   */
-  useEffect(() => {
-    if (!id) return;
-
-    const loadTaskAssignments = async () => {
-      const { data } = await supabase
-        .from("yacht_tasks")
-        .select("task_id")
-        .eq("yacht_id", id);
-
-      setAssignedTaskIds(
-        Array.isArray(data) ? data.map((r) => r.task_id) : []
-      );
-    };
-
-    loadTaskAssignments();
-  }, [id]);
-
-  /**
-   * Toggle engineer assignment
-   */
   const toggleEngineerAssignment = async (engineerId: string) => {
-    if (!id) return;
+    if (!yachtId) return;
 
     const isAssigned = assignedEngineerIds.includes(engineerId);
 
@@ -151,78 +105,36 @@ export default function YachtDetailPage() {
         .from("engineer_yachts")
         .delete()
         .eq("engineer_profile_id", engineerId)
-        .eq("yacht_id", id);
+        .eq("yacht_id", yachtId);
 
       setAssignedEngineerIds((prev) =>
-        prev.filter((e) => e !== engineerId)
+        prev.filter((id) => id !== engineerId)
       );
     } else {
       await supabase.from("engineer_yachts").insert({
         engineer_profile_id: engineerId,
-        yacht_id: id,
+        yacht_id: yachtId,
       });
 
       setAssignedEngineerIds((prev) => [...prev, engineerId]);
     }
   };
 
-  /**
-   * Toggle task assignment
-   */
-  const toggleTaskAssignment = async (taskId: string) => {
-    if (!id) return;
+  /* =======================
+     RENDER
+  ======================= */
 
-    const isAssigned = assignedTaskIds.includes(taskId);
-
-    if (isAssigned) {
-      await supabase
-        .from("yacht_tasks")
-        .delete()
-        .eq("yacht_id", id)
-        .eq("task_id", taskId);
-
-      setAssignedTaskIds((prev) =>
-        prev.filter((t) => t !== taskId)
-      );
-    } else {
-      await supabase.from("yacht_tasks").insert({
-        yacht_id: id,
-        task_id: taskId,
-      });
-
-      setAssignedTaskIds((prev) => [...prev, taskId]);
-    }
-  };
-
-  if (error) {
-    return (
-      <div>
-        <div
-          style={{ cursor: "pointer", marginBottom: 12 }}
-          onClick={() => navigate(-1)}
-        >
-          ← Back
-        </div>
-        <p style={{ color: "red" }}>{error}</p>
-      </div>
-    );
-  }
-
-  if (!yacht) {
-    return <div>Loading yacht…</div>;
-  }
+  if (error) return <p style={{ color: "red" }}>{error}</p>;
+  if (!yacht || loading) return <p>Loading…</p>;
 
   return (
     <div>
       {/* Back */}
-      <div
-        style={{ cursor: "pointer", marginBottom: 12 }}
-        onClick={() => navigate(-1)}
-      >
+      <div style={{ cursor: "pointer" }} onClick={() => navigate(-1)}>
         ← Back
       </div>
 
-      <h2 style={{ marginTop: 0 }}>{yacht.name}</h2>
+      <h2>{yacht.name}</h2>
 
       <p>
         <strong>Make / Model:</strong>{" "}
@@ -233,52 +145,30 @@ export default function YachtDetailPage() {
         {yacht.location || "Unknown"}
       </p>
 
-      <hr style={{ margin: "24px 0" }} />
+      <hr />
 
+      {/* Engineers */}
       <h3>Assigned Engineers</h3>
+      {engineers.map((engineer) => (
+        <div key={engineer.id}>
+          <label>
+            <input
+              type="checkbox"
+              checked={assignedEngineerIds.includes(engineer.id)}
+              onChange={() =>
+                toggleEngineerAssignment(engineer.id)
+              }
+            />{" "}
+            {engineer.full_name}
+          </label>
+        </div>
+      ))}
 
-      {loadingAssignments ? (
-        <p>Loading assignments…</p>
-      ) : (
-        <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
-          {engineers.map((engineer) => (
-            <li key={engineer.id} style={{ padding: "6px 0" }}>
-              <label style={{ cursor: "pointer" }}>
-                <input
-                  type="checkbox"
-                  checked={assignedEngineerIds.includes(
-                    engineer.id
-                  )}
-                  onChange={() =>
-                    toggleEngineerAssignment(engineer.id)
-                  }
-                />{" "}
-                {engineer.full_name}
-              </label>
-            </li>
-          ))}
-        </ul>
-      )}
+      <hr />
 
-      {/* TASKS SECTION */}
-      <hr style={{ margin: "24px 0" }} />
-
+      {/* Tasks */}
       <h3>Available Tasks</h3>
-
-      <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
-        {tasks.map((task) => (
-          <li key={task.id} style={{ padding: "6px 0" }}>
-            <label style={{ cursor: "pointer" }}>
-              <input
-                type="checkbox"
-                checked={assignedTaskIds.includes(task.id)}
-                onChange={() => toggleTaskAssignment(task.id)}
-              />{" "}
-              {task.description}
-            </label>
-          </li>
-        ))}
-      </ul>
+      <TaskTree yachtId={yachtId} />
     </div>
   );
 }
